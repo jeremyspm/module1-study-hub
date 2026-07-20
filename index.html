@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Module 1 · Pre-Class Deep Dive — Health Science 2 (722.541)</title>
 <style>
+  /* palette matched to the BN Hub for a unified house look */
   :root{
-    --bg:#0e1116; --bg2:#161b22; --bg3:#1c2230; --line:#2b3340;
-    --txt:#e6edf3; --mut:#9aa7b4; --acc:#4f9dff; --acc2:#7c5cff;
-    --good:#2ea043; --good-bg:#0f2a16; --bad:#e5534b; --bad-bg:#2a1212;
-    --warn:#d9a000; --warn-bg:#2a2410; --chip:#22304a;
-    --r:14px; --sh:0 6px 24px rgba(0,0,0,.35);
+    --bg:#0e1420; --bg2:#182133; --bg3:#1e2941; --line:#27324a;
+    --txt:#e8eef7; --mut:#9fb0c8; --acc:#4f9dff; --acc2:#2f6fd0;
+    --good:#39d98a; --good-bg:#0f2a1a; --bad:#e5534b; --bad-bg:#2a1212;
+    --warn:#ffce54; --warn-bg:#2a2410; --chip:#223052;
+    --r:16px; --sh:0 10px 40px rgba(0,0,0,.45);
   }
   [data-theme="light"]{
-    --bg:#f4f6fa; --bg2:#ffffff; --bg3:#eef2f8; --line:#dde3ec;
-    --txt:#161b22; --mut:#5a6675; --acc:#1666d6; --acc2:#6a40e0;
-    --good:#1a7f37; --good-bg:#e6f5ec; --bad:#c5302a; --bad-bg:#fbeceb;
-    --warn:#9a7400; --warn-bg:#fbf3d6; --chip:#dfe8f8; --sh:0 6px 24px rgba(20,30,50,.10);
+    --bg:#eef2f8; --bg2:#ffffff; --bg3:#f4f7fc; --line:#dbe3ef;
+    --txt:#16202f; --mut:#4a5a72; --acc:#1f6fe0; --acc2:#1657b8;
+    --good:#128a55; --good-bg:#e6f5ec; --bad:#c5302a; --bad-bg:#fbeceb;
+    --warn:#a9791a; --warn-bg:#fbf3d6; --chip:#e3ecfa; --sh:0 8px 30px rgba(30,50,90,.14);
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -415,6 +416,51 @@
     .tilt{transform:none !important}
   }
   @media print{.aurora{display:none !important}}
+
+  /* ======================= HOUSE FLATTEN ======================= */
+  /* Unify with the BN Hub: calm, flat surfaces — override the Liquid
+     Glass layer above via the cascade (its :where() rules are 0-specificity,
+     so these win). Remove to restore the glass look. */
+  .aurora{display:none !important}
+  body{background:linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 90%, #000 10%)) fixed !important}
+  /* solid surfaces, no blur, one soft resting shadow (like the Hub tiles) */
+  .card,.acc,.fcFace,.fcBack,.examBar,.sr,.tab,.btn,.btn.ghost,.iconbtn,.smbtn,header{
+    -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+  }
+  .card,.acc,.fcFace,.examBar,.sr{
+    background:var(--bg2) !important; border:1px solid var(--line) !important;
+    box-shadow:0 2px 10px rgba(0,0,0,.15) !important;
+  }
+  [data-theme="light"] .card,[data-theme="light"] .acc,[data-theme="light"] .fcFace,
+  [data-theme="light"] .examBar,[data-theme="light"] .sr{box-shadow:0 2px 12px rgba(30,50,90,.10) !important}
+  .fcFace{background:var(--bg2) !important} .fcBack{background:var(--bg3) !important}
+  .acc .acc{background:var(--bg3) !important}
+  .examBar{border-color:var(--acc) !important}
+  /* drop the rim/sheen pseudo layers */
+  .card::before,.card::after,.acc::before,.acc::after,.fcFace::before,.fcFace::after,
+  .examBar::before,.examBar::after,.sr::before{display:none !important}
+  /* recessed inner wells → plain */
+  .stat,.a,.expl,.promptout,.diagram,.prog,.opt{box-shadow:none !important}
+  /* flat buttons / tabs / header, exactly like the Hub */
+  .btn{background:var(--acc) !important; box-shadow:none !important}
+  .btn:hover:not(:disabled){transform:translateY(-1px); filter:brightness(1.06); box-shadow:none !important}
+  .btn:active:not(:disabled){transform:translateY(0) scale(.98)}
+  .btn.ghost{background:var(--bg2) !important; border:1px solid var(--line) !important; color:var(--txt) !important; box-shadow:none !important}
+  .tab{background:var(--bg2) !important; box-shadow:none !important}
+  .tab:hover{transform:none; color:var(--txt)}
+  .tab.active{background:var(--acc) !important; color:#fff !important; box-shadow:none !important; transform:none !important}
+  .smbtn.on{background:var(--acc) !important; box-shadow:none !important}
+  .opt.sel{border-color:var(--acc) !important; box-shadow:none !important}
+  .opt.correct{border-color:var(--good) !important; box-shadow:none !important}
+  .opt.wrong{border-color:var(--bad) !important; box-shadow:none !important}
+  header{background:linear-gradient(180deg, var(--bg) 82%, transparent) !important; border-bottom:1px solid var(--line) !important; box-shadow:none !important}
+  /* calm hover: a gentle lift on cards, nothing else moves */
+  .card:hover{transform:translateY(-2px) !important; box-shadow:var(--sh) !important; border-color:var(--acc) !important}
+  .acc:hover,.sr:hover,.fc:hover .fcFace{transform:none !important; box-shadow:0 2px 10px rgba(0,0,0,.15) !important}
+  .tilt{transform:none !important}
+  /* back-to-Hub button (house convention) */
+  .iconbtn.back{width:auto;padding:7px 12px;font-size:13px;font-weight:600;text-decoration:none;color:var(--mut);white-space:nowrap}
+  .iconbtn.back:hover{color:var(--txt);border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -454,6 +500,7 @@
 <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
 <header>
   <div class="top">
+    <a class="iconbtn back" href="https://jeremyspm.github.io/" title="Back to the BN Hub">← Hub</a>
     <div class="brand">Module 1 · Pre-Class Deep Dive<small>Health Science 2 · 722.541 · built around your lecturer's own self-test questions</small></div>
     <div class="spacer" style="flex:1"></div>
     <button class="iconbtn" id="printBtn" title="Print / save the question checklist as PDF">🖨</button>
