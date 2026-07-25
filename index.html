@@ -2181,5 +2181,90 @@ setView(LS.get("tab","start"));
 window.addEventListener("load",()=>{updateTabScroll();setHdr();});
 </script>
 
+<script>
+/* ===== STUDY BUS v2 (hub ⚡ engine — see estate STUDY-ENGINE-SPEC.md) =====
+   Copy-in block, app-tailored: bids each topic's LECTURER QUESTIONS as SAQ
+   cards (the hub plays them in its own player) — the primers, figures and
+   OpenStax links never bid; they're reference material. Keeps a per-question
+   Leitner SRS (m1_srs) fed by the hub's grade write-back, and honours ?tab=
+   links. Mirrors the pharmacology-hub block; see STUDY-HUB-BLUEPRINT.md. */
+(function(){
+'use strict';
+const APP='module1', NAME='Module 1 Study Hub';
+const here=location.origin+location.pathname;
+const IVL=[0, 10*60e3, 24*3600e3, 3*24*3600e3, 7*24*3600e3];   // Leitner boxes 0–4
+/* [[key point]] → plain escaped text: the ★ styling is this app's, the hub
+   player has its own list formatting */
+const plain=s=>esc(String(s)).replace(/\[\[([^\]]+?)\]\]/g,'$1');
+/* stable per-question id: hash of topic+question — editing wording resets
+   just that question's memory, same rule as the pharm hub & cram engine */
+const cid=function(mod,qq){ let h=5381; const s=mod+'|'+qq;
+  for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0;
+  return 'k'+(h>>>0).toString(36); };
+const SRS=LS.get('srs',{});
+const srsOf=id=>SRS[id]||{box:0,due:0,seen:0};
+const deck=t=>(t.lecturerSets||[]).reduce((a,s)=>a.concat(s.items),[])
+  .map(it=>({id:cid(t.id,it.q), it:it}));
+const MODS=DATA.topics.filter(t=>(t.lecturerSets||[]).length);
+
+/* grades the hub player recorded for us since we last ran — apply to our
+   own SRS at the time the recall actually happened, then clear the log */
+(function applyBusGrades(){
+  const gk='studybus.grades.'+APP;
+  let log=null; try{ log=JSON.parse(localStorage.getItem(gk)); }catch(e){}
+  try{ localStorage.removeItem(gk); }catch(e){}
+  if(!Array.isArray(log)||!log.length) return;
+  const known=new Set(); MODS.forEach(t=>deck(t).forEach(c=>known.add(c.id)));
+  log.forEach(function(ev){
+    if(!ev||!known.has(ev.card)) return;      // question edited since — drop
+    const st=srsOf(ev.card), r=+ev.r||0;
+    st.box = r===0?0 : r===1?st.box : Math.min(4, st.box+(r===3?2:1));
+    st.due=(+ev.ts||Date.now())+IVL[st.box];
+    st.seen++;
+    SRS[ev.card]=st;
+  });
+  LS.set('srs',SRS);
+})();
+
+function offers(){
+  // one offer per topic that has lecturer questions. evPerMin is raw memory
+  // value only (share of the topic currently due); the hub adds
+  // weight/urgency/hurdles from deadlines.js.
+  // Six topics, five offer slots: on a fresh device every topic is equally
+  // due, so a plain stable sort would drop the same last topic (lymph) every
+  // time. Rotate the list by the day number first — ties then hand the spare
+  // seat to a different topic each day and nothing is permanently invisible.
+  const now=Date.now();
+  const rot=Math.floor(now/864e5)%MODS.length;
+  return MODS.slice(rot).concat(MODS.slice(0,rot)).map(function(t){
+    const d=deck(t);
+    const due=d.filter(c=>srsOf(c.id).due<=now);
+    const frac=d.length?due.length/d.length:0;
+    const pool=(due.length?due:d).slice()
+      .sort((a,b)=>srsOf(a.id).due-srsOf(b.id).due)
+      .slice(0,12);
+    return { label:t.icon+' '+t.name+' recall',
+      topic:'hs2-'+t.id, assess:['hs2-t1','hs2-final'],
+      evPerMin:+(0.12+0.3*frac).toFixed(2),
+      kind:'cards',
+      cards:pool.map(function(c){
+        const pts=(c.it.a||[]).map(plain);
+        return {id:c.id,type:'saq',q:plain(c.it.q),points:pts,marks:pts.length};
+      }),
+      counts:{due:due.length,total:d.length} };
+  }).sort((a,b)=>b.evPerMin-a.evPerMin).slice(0,5);
+}
+function pulse(){ try{ localStorage.setItem('studybus.pulse.'+APP,
+  JSON.stringify({v:2,app:APP,name:NAME,url:here,ts:Date.now(),offers:offers()})); }catch(e){} }
+pulse();
+addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') pulse(); });
+addEventListener('pagehide',pulse);
+
+/* deep link: open the requested topic tab (reading = reference, not a session) */
+const q=new URLSearchParams(location.search), tb=q.get('tab');
+if(tb&&(tb==='start'||DATA.topics.some(t=>t.id===tb))) setView(tb);
+})();
+</script>
+
 </body>
 </html>
